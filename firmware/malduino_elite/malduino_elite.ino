@@ -42,6 +42,7 @@
 #define PRINTSCREEN 206
 
 File payload;
+File logFile;
 char *buf = malloc(sizeof(char) * buffersize);
 char *repeatBuffer = malloc(sizeof(char) * 12);
 
@@ -89,10 +90,15 @@ void KeyboardWrite(uint8_t c) {
     Keyboard.release(c);
 }
 
-void runLine() {
+void dbg(const String &str) {
 #ifdef debug
-    Serial.println("run: '" + String(buf).substring(0, bufSize) + "' (" + (String) bufSize + ")");
+    Serial.println(str);
+    if (logFile) logFile.println(str);
 #endif
+}
+
+void runLine() {
+    dbg("run: '" + String(buf).substring(0, bufSize) + "' (" + (String) bufSize + ")");
 
     int space = getSpace(0, bufSize);
 
@@ -111,9 +117,7 @@ void runLine() {
             int x = getInt(buf, space);
             int y = getInt(buf, nSpace);
             Mouse.move(x, y);
-#ifdef debug
-            Serial.println("Move mouse " + (String) x + " " + (String) y);
-#endif
+            dbg("Move mouse " + (String) x + " " + (String) y);
         } else if (equalsBuffer(0, space, "SCROLL")) Mouse.move(0, 0, getInt(buf, space));
         else if (equalsBuffer(0, space, "RANDOMMIN")) rMin = getInt(buf, space);
         else if (equalsBuffer(0, space, "RANDOMMAX")) rMax = getInt(buf, space);
@@ -134,10 +138,7 @@ void runLine() {
 }
 
 void runCommand(int s, int e) {
-
-#ifdef debug
-    Serial.println("Press '" + String(buf).substring(s, e) + "'");
-#endif
+    dbg("Press '" + String(buf).substring(s, e) + "'");
 
     if (e - s < 2) Keyboard.press(buf[s]);
     else if (equalsBuffer(s, e, "ENTER")) Keyboard.press(KEY_RETURN);
@@ -207,9 +208,8 @@ void runCommand(int s, int e) {
     else if (equalsBuffer(s, e, "RELEASE_LEFT")) Mouse.release(MOUSE_RIGHT);
     else if (equalsBuffer(s, e, "RELEASE_MIDDLE")) Mouse.release(MOUSE_MIDDLE);
 
-#ifdef debug
-    else Serial.println("failed to find command");
-#endif
+    else
+        dbg("failed to find command");
     /* not implemented
     else if(equalsBuffer(s,e,"APP")) Keyboard.press();
     else if(equalsBuffer(s,e,"MENU")) Keyboard.press();
@@ -254,11 +254,14 @@ void setup() {
 
     payload = SD.open(scriptName);
     if (!payload) {
-#ifdef debug
-        Serial.println("couldn't find script: '" + String(scriptName) + "'");
-#endif
+        dbg("couldn't find script: '" + String(scriptName) + "'");
         return;
     } else {
+#ifdef debug
+        logFile = SD.open("debug.log", FILE_WRITE);
+        logFile.println("DEBUG FILE START");
+#endif
+
         Keyboard.begin();
         Mouse.begin();
         while (payload.available()) {
@@ -299,6 +302,10 @@ void setup() {
             bufSize = 0;
         }
         payload.close();
+#ifdef debug
+        if (logFile) logFile.println("DEBUG FILE END");
+        logFile.close();
+#endif
         Mouse.end();
         Keyboard.end();
     }
