@@ -262,7 +262,7 @@ void setup() {
         Keyboard.begin();
         Mouse.begin();
         while (payload.available()) {
-
+            
             buf[bufSize] = payload.read();
             if (buf[bufSize] == '\r' || buf[bufSize] == '\n' || bufSize >= buffersize) {
                 if (buf[bufSize] == '\r' && payload.peek() == '\n') payload.read();

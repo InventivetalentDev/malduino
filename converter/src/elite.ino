@@ -39,7 +39,7 @@
 #define KEYPAD_PERIOD 235
 #define KEYPAD_PLUS 223
 #define KEYPAD_SLASH 220
-#define PRINTSCREEN 206 
+#define PRINTSCREEN 206
 
 File payload;
 char* buf = malloc(sizeof(char)*buffersize);
@@ -83,14 +83,14 @@ int getInt(char* str, int pos){
   }
 }
 
-void KeyboardWrite(uint8_t c){  
+void KeyboardWrite(uint8_t c){
   Keyboard.press(c);
   delay(defaultCharDelay);
   Keyboard.release(c);
 }
 
 void runLine(){
-  #ifdef debug 
+  #ifdef debug
     Serial.println("run: '"+String(buf).substring(0,bufSize)+"' ("+(String)bufSize+")");
   #endif
 
@@ -109,7 +109,7 @@ void runLine(){
       int x = getInt(buf,space);
       int y = getInt(buf,nSpace);
       Mouse.move(x,y);
-      #ifdef debug 
+      #ifdef debug
         Serial.println("Move mouse "+(String)x+" "+(String)y);
       #endif
     }
@@ -134,10 +134,10 @@ void runLine(){
 
 void runCommand(int s, int e){
 
-  #ifdef debug 
+  #ifdef debug
     Serial.println("Press '"+String(buf).substring(s,e)+"'");
   #endif
-  
+
   if(e - s < 2) Keyboard.press(buf[s]);
   else if(equalsBuffer(s,e,"ENTER")) Keyboard.press(KEY_RETURN);
   else if(equalsBuffer(s,e,"GUI") || equalsBuffer(s,e,"WINDOWS")) Keyboard.press(KEY_LEFT_GUI);
@@ -156,12 +156,12 @@ void runCommand(int s, int e){
   else if(equalsBuffer(s,e,"SPACE")) Keyboard.press(' ');
   else if(equalsBuffer(s,e,"TAB")) Keyboard.press(KEY_TAB);
   else if(equalsBuffer(s,e,"BACKSPACE")) Keyboard.press(KEY_BACKSPACE);
-  
+
   else if(equalsBuffer(s,e,"UP") || equalsBuffer(s,e,"UPARROW")) Keyboard.press(KEY_UP_ARROW);
   else if(equalsBuffer(s,e,"DOWN") || equalsBuffer(s,e,"DOWNARROW")) Keyboard.press(KEY_DOWN_ARROW);
   else if(equalsBuffer(s,e,"LEFT") || equalsBuffer(s,e,"LEFTARROW")) Keyboard.press(KEY_LEFT_ARROW);
   else if(equalsBuffer(s,e,"RIGHT") || equalsBuffer(s,e,"RIGHTARROW")) Keyboard.press(KEY_RIGHT_ARROW);
-  
+
   else if(equalsBuffer(s,e,"PRINTSCREEN")) Keyboard.press(PRINTSCREEN);
 
   else if(equalsBuffer(s,e,"F1")) Keyboard.press(KEY_F1);
@@ -196,14 +196,14 @@ void runCommand(int s, int e){
   else if(equalsBuffer(s,e,"CLICK")  || equalsBuffer(s,e,"CLICK_LEFT") || equalsBuffer(s,e,"MOUSECLICK")) Mouse.click();
   else if(equalsBuffer(s,e,"CLICK_RIGHT")) Mouse.click(MOUSE_RIGHT);
   else if(equalsBuffer(s,e,"CLICK_MIDDLE")) Mouse.click(MOUSE_MIDDLE);
-  
+
   else if(equalsBuffer(s,e,"PRESS") || equalsBuffer(s,e,"PRESS_LEFT")) Mouse.press();
   else if(equalsBuffer(s,e,"PRESS_LEFT")) Mouse.press(MOUSE_RIGHT);
   else if(equalsBuffer(s,e,"PRESS_MIDDLE")) Mouse.press(MOUSE_MIDDLE);
   else if(equalsBuffer(s,e,"RELEASE") || equalsBuffer(s,e,"RELEASE_LEFT")) Mouse.release();
   else if(equalsBuffer(s,e,"RELEASE_LEFT")) Mouse.release(MOUSE_RIGHT);
   else if(equalsBuffer(s,e,"RELEASE_MIDDLE")) Mouse.release(MOUSE_MIDDLE);
-  
+
 #ifdef debug
   else Serial.println("failed to find command");
 #endif
@@ -222,19 +222,19 @@ void setup() {
     delay(2000);
     Serial.println("Started!");
   #endif
-  
+
   randomSeed(analogRead(0));
-   
+
   pinMode(ledPin, OUTPUT);
   digitalWrite(ledPin, HIGH);
-  
+
   String scriptName = ""; // Name of the file that will be opened
 
   pinMode(dip1, INPUT_PULLUP);
   pinMode(dip2, INPUT_PULLUP);
   pinMode(dip3, INPUT_PULLUP);
   pinMode(dip4, INPUT_PULLUP);
-  
+
   if(digitalRead(dip1) == LOW){scriptName += '1';} else {scriptName += '0';}
   if(digitalRead(dip2) == LOW){scriptName += '1';} else {scriptName += '0';}
   if(digitalRead(dip3) == LOW){scriptName += '1';} else {scriptName += '0';}
@@ -243,7 +243,7 @@ void setup() {
   scriptName += ".txt";
 
   if(!SD.begin(4)) {
-    #ifdef debug 
+    #ifdef debug
       Serial.println("couldn't access sd-card :(");
     #endif
     return;
@@ -251,7 +251,7 @@ void setup() {
 
   payload = SD.open(scriptName);
   if(!payload){
-#ifdef debug 
+#ifdef debug
     Serial.println("couldn't find script: '"+String(scriptName)+"'");
 #endif
     return;
@@ -263,12 +263,12 @@ void setup() {
       buf[bufSize] = payload.read();
       if(buf[bufSize] == '\r' || buf[bufSize] == '\n' || bufSize >= buffersize){
         if(buf[bufSize] == '\r' && payload.peek() == '\n') payload.read();
-        
-        //---------REPEAT---------     
+
+        //---------REPEAT---------
         int repeatBufferSize = 0;
         int repeats = 0;
         unsigned long payloadPosition = payload.position();
-        
+
         for(int i=0;i<12;i++){
           if(payload.available()){
             repeatBuffer[repeatBufferSize] = payload.read();
@@ -283,10 +283,10 @@ void setup() {
         }
 
         for(int i=0;i<repeats;i++) runLine();
-        
+
         payload.seek(payloadPosition);
         //------------------------
-        
+
         runLine();
         bufSize = 0;
       }
